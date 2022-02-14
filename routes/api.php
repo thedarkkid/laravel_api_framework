@@ -19,14 +19,13 @@ Route::middleware(['cors', 'json.response', 'auth:api'])->get('/user', function 
 });
 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
-
     // public routes
     Route::post('/login', 'Auth\ApiAuthController@login')->name('login.api');
     Route::post('/register','Auth\ApiAuthController@register')->name('register.api');
-    Route::post('/logout', 'Auth\ApiAuthController@logout')->name('logout.api');
 });
 
 Route::middleware('auth:api')->group(function () {
-    Route::get('/articles', 'ArticleController@index')->middleware('api.admin')->name('articles');
+    Route::get('/articles', 'ArticleController@index')->name('articles.index');
+    Route::post('/logout', 'Auth\ApiAuthController@logout')->name('logout.api');
 });
 
