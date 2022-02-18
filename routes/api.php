@@ -21,11 +21,17 @@ Route::middleware(['cors', 'json.response', 'auth:api'])->get('/user', function 
 Route::group(['middleware' => ['cors', 'json.response']], function () {
     // public routes
     Route::post('/login', 'Auth\ApiAuthController@login')->name('login.api');
-    Route::post('/register','Auth\ApiAuthController@register')->name('register.api');
+    Route::post('/register', 'Auth\ApiAuthController@register')->name('register.api');
+
+    // Protected Routes
+    Route::middleware('auth:api')->group(function () {
+        Route::get('/articles', 'ArticleController@index')->name('articles.index');
+        Route::get('/articles/{id}', 'ArticleController@show')->name('articles.show');
+        Route::post('/articles', 'ArticleController@store')->name('articles.store');
+        Route::put('/articles/{id}', 'ArticleController@update')->name('articles.update');
+        Route::delete('/articles/{id}', 'ArticleController@destroy')->name('articles.destroy');
+        Route::post('/logout', 'Auth\ApiAuthController@logout')->name('logout.api');
+    });
 });
 
-Route::middleware('auth:api')->group(function () {
-    Route::get('/articles', 'ArticleController@index')->name('articles.index');
-    Route::post('/logout', 'Auth\ApiAuthController@logout')->name('logout.api');
-});
 

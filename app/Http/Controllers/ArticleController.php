@@ -3,7 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Article;
+use App\Http\Requests\Article\ArticleStoreRequest;
+use App\Http\Requests\Article\ArticleUpdateRequest;
 use App\Http\Resources\Article\Article as ArticleResource;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 use Illuminate\Http\Response;
@@ -22,58 +25,60 @@ class ArticleController extends Controller
     }
 
     /**
-     * Show the form for creating a new resource.
-     *
-     * @return Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
      * Store a newly created resource in storage.
      *
-     * @param Request $request
-     * @return Response
+     * @param ArticleStoreRequest $request
+     * @return ArticleResource|Response
      */
-    public function store(Request $request)
+    public function store(ArticleStoreRequest $request)
     {
-        //
+        $validatedArticle = $request->validated();
+        $article = new Article($validatedArticle);
+        if ($article->save()) {
+            return new ArticleResource($article->load('user'));
+        }
+
+        return new Response(["message" => "error creating article"], 500);
     }
 
     /**
      * Display the specified resource.
      *
      * @param int $id
-     * @return Response
+     * @return ArticleResource|Response
      */
     public function show($id)
     {
-        //
+        $error = new Response(["message" => "article not found"], 404);
+        if (!is_numeric($id)) return $error;
+        try {
+            $article = Article::with("user")->findOrFail($id);
+            return new ArticleResource($article);
+        } catch (ModelNotFoundException $e) {
+            return $error;
+        }
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param int $id
-     * @return Response
-     */
-    public function edit($id)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
      *
      * @param Request $request
      * @param int $id
-     * @return Response
+     * @return ArticleResource|Response
      */
-    public function update(Request $request, $id)
+    public function update(ArticleUpdateRequest $request, $id)
     {
-
+        $toUpdate = $request->validated();
+        $error = new Response(["message" => "error updating article"], 404);
+        if (!is_numeric($id)) return $error;
+        try {
+            $article = Article::findOrFail($id);
+            if ($article->update($toUpdate)) return new ArticleResource($article->load('user'));
+        } catch (\Exception $exception) {
+            return $error;
+        }
+        return $error;
     }
 
     /**
@@ -84,6 +89,11 @@ class ArticleController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $error = new Response(["message" => "error deleting article"], 404);
+        if (!is_numeric($id)) return $error;
+        if (Article::where('id', $id)->delete()) {
+            return new Response(["message" => "article deleted"], 201);
+        };
+        return $error;
     }
 }
