@@ -18,9 +18,10 @@ class ArticleController extends Controller
      *
      * @return AnonymousResourceCollection
      */
-    public function index()
+    public function index(Request $request)
     {
-        $articles = Article::with('user')->paginate(10);
+        $limit = ($request->has('_limit')) ? $request->get('_limit') : 10;
+        $articles = Article::filterBy($request)->with('user')->paginate($limit);
         return ArticleResource::collection($articles);
     }
 
@@ -63,14 +64,14 @@ class ArticleController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param Request $request
+     * @param ArticleUpdateRequest $request
      * @param int $id
      * @return ArticleResource|Response
      */
     public function update(ArticleUpdateRequest $request, $id)
     {
         $toUpdate = $request->validated();
-        $error = new Response(["message" => "error updating article"], 404);
+        $error = new Response(["message" => "error updating article"], 500);
         if (!is_numeric($id)) return $error;
         try {
             $article = Article::findOrFail($id);
@@ -89,10 +90,10 @@ class ArticleController extends Controller
      */
     public function destroy($id)
     {
-        $error = new Response(["message" => "error deleting article"], 404);
+        $error = new Response(["message" => "error deleting article"], 500);
         if (!is_numeric($id)) return $error;
         if (Article::where('id', $id)->delete()) {
-            return new Response(["message" => "article deleted"], 201);
+            return new Response(["message" => "article deleted"], 200);
         };
         return $error;
     }
